@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Horas Extras</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f4f6;color:#111827}
+header{background:#111827;color:white;padding:18px 16px;position:sticky;top:0;z-index:5}
+.top{max-width:900px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px}
+h1{font-size:21px;margin:0}.sub{font-size:12px;opacity:.7;margin-top:3px}
+button{border:0;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer}
+.primary{background:#2563eb;color:#fff}.ghost{background:#fff;color:#111827}.danger{background:#fee2e2;color:#991b1b}
+main{max-width:900px;margin:auto;padding:16px}
+.yearbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.months{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:16px}
+.month{background:white;color:#374151;border:1px solid #e5e7eb;padding:9px 4px;font-size:12px}.month.active{background:#2563eb;color:white;border-color:#2563eb}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.card{background:white;border-radius:14px;padding:14px;box-shadow:0 1px 3px #0000000d}.label{font-size:12px;color:#6b7280}.value{font-size:21px;font-weight:800;margin-top:5px}
+.periods{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.period{background:white;border-radius:14px;padding:14px}.period h3{margin:0 0 7px;font-size:14px}.period strong{font-size:19px}.muted{color:#6b7280;font-size:12px}
+.toolbar{display:flex;gap:8px;margin-bottom:10px}.toolbar input{flex:1}
+input,select{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;background:white;font-size:15px}
+.list{display:grid;gap:9px}.item{background:white;border-radius:14px;padding:13px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.item h3{font-size:15px;margin:0 0 4px}.item p{font-size:12px;color:#6b7280;margin:0}.money{font-weight:800;text-align:right}.actions{display:flex;gap:6px;margin-top:7px}.actions button{padding:7px 9px;font-size:11px}
+.empty{text-align:center;background:white;padding:28px;border-radius:14px;color:#6b7280}
+section{display:none}.activeSection{display:block}
+.nav{display:flex;gap:7px;margin-bottom:16px}.nav button{flex:1;background:white;border:1px solid #e5e7eb}.nav button.active{background:#111827;color:white}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:flex-end;justify-content:center;z-index:20}.modal.show{display:flex}
+.sheet{background:white;width:100%;max-width:600px;border-radius:20px 20px 0 0;padding:18px;max-height:92vh;overflow:auto}.sheet h2{margin:0 0 14px;font-size:19px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{margin-bottom:11px}.field label{display:block;font-size:12px;font-weight:700;margin-bottom:5px}.full{grid-column:1/-1}
+.row{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+.holiday{display:flex;gap:8px;align-items:center;margin:7px 0}.holiday span{flex:1}
+small.badge{background:#fef3c7;padding:4px 7px;border-radius:8px;color:#92400e;font-weight:700}
+@media(max-width:600px){.months{grid-template-columns:repeat(4,1fr)}.cards{grid-template-columns:1fr 1fr}.cards .card:last-child{grid-column:1/-1}.periods{grid-template-columns:1fr}.item{align-items:flex-start}.money{min-width:100px}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="top"><div><h1>Horas Extras</h1><div class="sub">Controle de horas e valores</div></div><button class="primary" onclick="openModal()">+ Registrar</button></div></header>
+<main>
+<div class="nav"><button id="navDash" class="active" onclick="showSection('dashboard')">Dashboard</button><button id="navCfg" onclick="showSection('config')">Configurações</button></div>
+
+<section id="dashboard" class="activeSection">
+<div class="yearbar"><button class="ghost" onclick="changeYear(-1)">‹</button><strong id="year"></strong><button class="ghost" onclick="changeYear(1)">›</button></div>
+<div class="months" id="months"></div>
+<div class="cards">
+<div class="card"><div class="label">Horas extras no mês</div><div class="value" id="monthHours">0h00</div></div>
+<div class="card"><div class="label">Registros</div><div class="value" id="monthCount">0</div></div>
+<div class="card"><div class="label">Valor estimado</div><div class="value" id="monthMoney">R$ 0,00</div></div>
+</div>
+<div class="periods">
+<div class="period"><h3>1ª quinzena</h3><strong id="p1Hours">0h00</strong><div class="muted" id="p1Money">R$ 0,00 · dias 01 a 15</div></div>
+<div class="period"><h3>2ª quinzena</h3><strong id="p2Hours">0h00</strong><div class="muted" id="p2Money">R$ 0,00 · dia 16 ao fim do mês</div></div>
+</div>
+<div class="toolbar"><input id="search" placeholder="Pesquisar por data ou observação" oninput="render()"><select id="filter" onchange="render()"><option value="all">Todos</option><option value="weekday">Seg–Sex</option><option value="weekend">Sáb/Dom</option><option value="holiday">Feriados</option></select></div>
+<div class="list" id="list"></div>
+</section>
+
+<section id="config">
+<div class="card">
+<h2 style="margin-top:0">Valores das horas extras</h2>
+<div class="field"><label>Segunda a sexta — hora extra 100%</label><input id="rateWeek" type="number" step=".01"></div>
+<div class="field"><label>Sábados, domingos e feriados — hora extra 100%</label><input id="rateSpecial" type="number" step=".01"></div>
+<button class="primary" onclick="saveConfig()">Salvar valores</button>
+</div>
+<div class="card" style="margin-top:12px">
+<h2 style="margin-top:0">Feriados</h2>
+<div class="muted">Cadastre os feriados que devem receber a tarifa de R$ 19,65. Feriados de sábado e domingo já usam essa tarifa automaticamente.</div>
+<div class="grid2" style="margin-top:12px"><input id="holidayDate" type="date"><input id="holidayName" placeholder="Nome do feriado"></div>
+<button class="primary" style="margin-top:9px" onclick="addHoliday()">Adicionar feriado</button>
+<div id="holidays" style="margin-top:12px"></div>
+</div>
+<div class="card" style="margin-top:12px">
+<h2 style="margin-top:0">Dados</h2><button class="ghost" onclick="exportData()">Exportar backup</button>
+</div>
+</section>
+</main>
+
+<div class="modal" id="modal"><div class="sheet">
+<h2 id="modalTitle">Registrar hora extra</h2>
+<div class="grid2">
+<div class="field"><label>Data</label><input id="date" type="date"></div>
+<div class="field"><label>Entrada da hora extra</label><input id="start" type="time"></div>
+<div class="field"><label>Saída da hora extra</label><input id="end" type="time"></div>
+<div class="field"><label>Observação (opcional)</label><input id="note" placeholder="Ex.: fechamento"></div>
+</div>
+<div id="calc" class="muted" style="margin:5px 0 13px"></div>
+<div class="row"><button class="ghost" onclick="closeModal()">Cancelar</button><button class="primary" onclick="saveEntry()">Salvar</button></div>
+</div></div>
+
+<script>
+const months=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const key='horas_extras_v1';
+let state=JSON.parse(localStorage.getItem(key)||'null')||{year:new Date().getFullYear(),month:new Date().getMonth(),entries:[],holidays:[],rateWeek:18,rateSpecial:19.65};
+let editing=null;
+
+function persist(){localStorage.setItem(key,JSON.stringify(state))}
+function money(v){return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
+function dur(min){let h=Math.floor(min/60),m=min%60;return h+'h'+String(m).padStart(2,'0')}
+function dateKey(d){return d.toISOString().slice(0,10)}
+function isHoliday(ds){return state.holidays.some(h=>h.date===ds)}
+function info(ds){
+ let d=new Date(ds+'T12:00:00'), day=d.getDay();
+ let special=day===0||day===6||isHoliday(ds);
+ return {special, label:isHoliday(ds)?'Feriado':(day===0?'Domingo':day===6?'Sábado':'Dia útil'), rate:special?Number(state.rateSpecial):Number(state.rateWeek)};
+}
+function minutesBetween(a,b){
+ let [ah,am]=a.split(':').map(Number),[bh,bm]=b.split(':').map(Number);
+ let x=ah*60+am,y=bh*60+bm;if(y<x)y+=1440;return y-x;
+}
+function selected(){return state.entries.filter(e=>e.date.startsWith(state.year+'-'+String(state.month+1).padStart(2,'0')))}
+function totals(es){return es.reduce((a,e)=>{a.min+=e.minutes;a.val+=e.minutes/60*e.rate;return a},{min:0,val:0})}
+function render(){
+ document.getElementById('year').textContent=state.year;
+ document.getElementById('months').innerHTML=months.map((m,i)=>`<button class="month ${i===state.month?'active':''}" onclick="selectMonth(${i})">${m.slice(0,3)}</button>`).join('');
+ let es=selected(), t=totals(es);
+ document.getElementById('monthHours').textContent=dur(t.min);document.getElementById('monthCount').textContent=es.length;document.getElementById('monthMoney').textContent=money(t.val);
+ let a=totals(es.filter(e=>new Date(e.date+'T12:00:00').getDate()<=15)),b=totals(es.filter(e=>new Date(e.date+'T12:00:00').getDate()>=16));
+ document.getElementById('p1Hours').textContent=dur(a.min);document.getElementById('p1Money').textContent=money(a.val)+' · dias 01 a 15';
+ document.getElementById('p2Hours').textContent=dur(b.min);document.getElementById('p2Money').textContent=money(b.val)+' · dia 16 ao fim do mês';
+ let q=document.getElementById('search').value.toLowerCase(),f=document.getElementById('filter').value;
+ es=es.filter(e=>(e.date+' '+(e.note||'')).toLowerCase().includes(q)).filter(e=>f==='all'||(f==='holiday'&&isHoliday(e.date))||(f==='weekend'&&info(e.date).special&&!isHoliday(e.date))||(f==='weekday'&&!info(e.date).special));
+ es.sort((a,b)=>b.date.localeCompare(a.date)||b.start.localeCompare(a.start));
+ document.getElementById('list').innerHTML=es.length?es.map(e=>{let i=info(e.date);return `<div class="item"><div><h3>${new Date(e.date+'T12:00:00').toLocaleDateString('pt-BR')} · ${e.start}–${e.end}</h3><p>${i.label} ${e.note?'· '+escapeHtml(e.note):''}</p><div style="margin-top:7px"><small class="badge">${dur(e.minutes)}</small></div><div class="actions"><button class="ghost" onclick="editEntry('${e.id}')">Editar</button><button class="danger" onclick="deleteEntry('${e.id}')">Excluir</button></div></div><div class="money">${money(e.minutes/60*e.rate)}<div class="muted">${money(e.rate)}/h</div></div></div>`}).join(''):'<div class="empty">Nenhuma hora extra registrada neste período.</div>';
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function selectMonth(i){state.month=i;persist();render()}
+function changeYear(n){state.year+=n;persist();render()}
+function showSection(s){document.getElementById('dashboard').classList.toggle('activeSection',s==='dashboard');document.getElementById('config').classList.toggle('activeSection',s==='config');document.getElementById('navDash').classList.toggle('active',s==='dashboard');document.getElementById('navCfg').classList.toggle('active',s==='config');if(s==='config')renderConfig()}
+function openModal(id=null){
+ editing=id;document.getElementById('modal').classList.add('show');document.getElementById('modalTitle').textContent=id?'Editar hora extra':'Registrar hora extra';
+ let e=id?state.entries.find(x=>x.id===id):null;
+ document.getElementById('date').value=e?e.date:`${state.year}-${String(state.month+1).padStart(2,'0')}-01`;
+ document.getElementById('start').value=e?e.start:'';document.getElementById('end').value=e?e.end:'';document.getElementById('note').value=e?e.note||'':'';
+ updateCalc();
+}
+function closeModal(){document.getElementById('modal').classList.remove('show');editing=null}
+document.getElementById('start').addEventListener('input',updateCalc);document.getElementById('end').addEventListener('input',updateCalc);document.getElementById('date').addEventListener('input',updateCalc);
+function updateCalc(){let d=document.getElementById('date').value,a=document.getElementById('start').value,b=document.getElementById('end').value;if(d&&a&&b){let m=minutesBetween(a,b),i=info(d);document.getElementById('calc').textContent=`Total: ${dur(m)} · ${i.label} · ${money(i.rate)}/hora · valor: ${money(m/60*i.rate)}`}else document.getElementById('calc').textContent='Informe data, entrada e saída para calcular.'}
+function saveEntry(){
+ let date=document.getElementById('date').value,start=document.getElementById('start').value,end=document.getElementById('end').value;
+ if(!date||!start||!end)return alert('Preencha data, entrada e saída.');
+ let minutes=minutesBetween(start,end);if(minutes<=0)return alert('O horário de saída precisa ser diferente da entrada.');
+ let rate=info(date).rate,note=document.getElementById('note').value.trim();
+ if(editing){let e=state.entries.find(x=>x.id===editing);Object.assign(e,{date,start,end,minutes,rate,note})}else state.entries.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),date,start,end,minutes,rate,note});
+ state.year=Number(date.slice(0,4));state.month=Number(date.slice(5,7))-1;persist();closeModal();render();
+}
+function editEntry(id){openModal(id)}
+function deleteEntry(id){if(confirm('Excluir este registro?')){state.entries=state.entries.filter(e=>e.id!==id);persist();render()}}
+function saveConfig(){state.rateWeek=Number(document.getElementById('rateWeek').value)||0;state.rateSpecial=Number(document.getElementById('rateSpecial').value)||0;state.entries.forEach(e=>e.rate=info(e.date).rate);persist();render();alert('Valores salvos.')}
+function renderConfig(){
+ document.getElementById('rateWeek').value=state.rateWeek;document.getElementById('rateSpecial').value=state.rateSpecial;
+ document.getElementById('holidays').innerHTML=state.holidays.length?state.holidays.sort((a,b)=>a.date.localeCompare(b.date)).map(h=>`<div class="holiday"><span><b>${new Date(h.date+'T12:00:00').toLocaleDateString('pt-BR')}</b> — ${escapeHtml(h.name||'Feriado')}</span><button class="danger" onclick="removeHoliday('${h.date}')">Excluir</button></div>`).join(''):'<div class="muted">Nenhum feriado cadastrado.</div>';
+}
+function addHoliday(){let date=document.getElementById('holidayDate').value,name=document.getElementById('holidayName').value.trim();if(!date)return alert('Informe a data.');state.holidays=state.holidays.filter(h=>h.date!==date);state.holidays.push({date,name:name||'Feriado'});state.entries.forEach(e=>e.rate=info(e.date).rate);persist();document.getElementById('holidayDate').value='';document.getElementById('holidayName').value='';renderConfig();render()}
+function removeHoliday(d){state.holidays=state.holidays.filter(h=>h.date!==d);state.entries.forEach(e=>e.rate=info(e.date).rate);persist();renderConfig();render()}
+function exportData(){let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup_horas_extras.json';a.click();URL.revokeObjectURL(a.href)}
+render();
+</script>
+</body></html>
